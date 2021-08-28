@@ -1,5 +1,5 @@
 %% The dynamic model of a 2 DoF 'VR' Manipulator using Lagrange Euler method
-% see 2DOF-Robot.png for model
+% see '2DOF-Robot.png' for model
 
 %% Declaring Variables to be used
 syms theta1;
