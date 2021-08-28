@@ -1,0 +1,107 @@
+%%The dynamic model of a 2 DoF 'VR' Manipulator using Newton Euler method
+% refer to see 2DOF-Robot.png for model
+
+%% Declaring Variables to be used
+syms theta1;
+syms theta2;
+
+syms q1;
+syms q2;
+syms q1_dot;
+syms q2_dot;
+syms q1_dot_dot;
+syms q2_dot_dot;
+
+syms g;
+syms W;
+
+c1 = cos(theta1);
+s1 = sin(theta1);
+c2 = cos(theta2);
+s2 = sin(theta2);
+
+syms M1 %link 1 mass;
+syms M2 %link 2 mass;
+syms L1 %link 1 length;
+syms L2 %link 2 length;
+
+%% Step1: Getting Transformation matrix
+R01 = [c1,0,s1;s1,0,-c1;0,1,0];
+R12 = [c2,-s2,0;s2,c2,0;0,0,1];
+
+R02 = R01*R12;
+
+R10 = simplify(inv(R01));
+R21 = simplify(inv(R12));
+R20 = simplify(inv(R02));   
+
+%% Declaring iri and Ii
+r_11 = [-L1/2;0;0];
+r_22 = [-L2/2;0;0]; 
+
+I1 =[(M1*(L1)^2)/3,0,0;0,0,0;0,0,0];
+I2 =[(M2*(L2)^2)/3,0,0;0,0,0;0,0,0];
+
+D01 = [L1*c1;L1*s1;0];
+D12 = [L2*c2;L2*s2;0];
+
+z0 = [0;0;1];
+
+
+%% Forward Iteration 
+%% iwi calculation
+
+w00 = [0;0;0];
+
+w11 = R10*(w00 +z0*q1_dot);
+
+w22 = R21*(w11+z0*q2_dot);
+
+%% iw'i calculation
+w00_dot = [0;0;0];
+
+w11_dot = R10*(w00_dot + z0*q1_dot_dot + cross(w00,(z0*q1_dot)));
+
+w22_dot = R21*(w11_dot + z0*q2_dot_dot + cross(w11,(z0*q2_dot)));
+
+%% iv'i calculation
+
+v00_dot = [0;0;-g];
+
+v11_dot = simplify(R10*v00_dot + cross(w11_dot,(R10*D01))+cross(w11,(cross(w11,(R10*D01)))));
+
+v22_dot = simplify(R21*v11_dot + cross(w22_dot,(R21*D12))+cross(w22,(cross(w22,(R21*D12)))));
+
+
+%% Acceleration of CoM
+
+v_11_dot = simplify(v11_dot + cross(w11_dot,r_11) + cross(w11,(cross(w11,r_11))));
+
+v_22_dot = simplify(v22_dot + cross(w22_dot,r_22) + cross(w22,(cross(w22,r_22))));
+
+
+%% Backward Iteration
+%% i=2
+F22 = simplify(M2*v_22_dot);
+
+N22 = I2*w22_dot + cross(w22,(I2*w22));
+
+
+f22 = F22 + [-W*s2;-W*c2;0];
+n22 = simplify(cross((R21*D12),([-W*s2;-W*c2;0])) + cross((R21*D12+R20*r_22),F22) + N22);
+
+%% i =1
+
+F11 = simplify(M1*v_11_dot);
+
+N11 = I1*w11_dot + cross(w11,(I1*w11));
+
+
+f11 = F11 + R12*f22;
+n11 = simplify(R12*n22 + cross((R10*D01),(R12*f22)) + cross((R10*D01+R10*r_11),F11) + N11);
+
+%% torque
+
+T1 = simplify((transpose(n11))*R10*z0);
+
+T2 = (transpose(n22))*R21*z0;
