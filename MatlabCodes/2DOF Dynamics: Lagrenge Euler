@@ -1,0 +1,89 @@
+%% The dynamic model of a 2 DoF 'VR' Manipulator using Lagrange Euler method
+% see 2DOF-Robot.png for model
+
+%% Declaring Variables to be used
+syms theta1;
+syms theta2;
+
+syms q1;
+syms q2;
+syms q1_dot;
+syms q2_dot;
+syms q1_dot_dot;
+syms q2_dot_dot;
+
+c1 = cos(theta1);
+s1 = sin(theta1);
+c2 = cos(theta2);
+s2 = sin(theta2);
+
+syms M1 %link 1 mass
+syms M2 %link 2 mass
+syms L1 %link 1 length
+syms L2 %link 2 length
+
+%% Step1: Getting Transformation matrix
+T01 = [c1,0,s1,L1*c1;s1,0,-c1,L1*s1;0,1,0,0;0,0,0,1];
+T12 = [c2,-s2,0,L2*c2;s2,c2,0,L2*s2;0,0,1,0;0,0,0,1];
+
+T02 = T01*T12;
+
+%% Define Q and I
+
+Q1 = [0,-1,0,0;1,0,0,0;0,0,0,0;0,0,0,0];
+Q2 = Q1;
+
+I1 =[(M1*(L1)^2)/3,0,0,-M1*L1/2;0,0,0,0;0,0,0,0;-M1*L1/2,0,0,M1];
+I2 =[(M2*(L2)^2)/3,0,0,-M2*L2/2;0,0,0,0;0,0,0,0;-M2*L2/2,0,0,M2];
+
+%% Solve for find dij,dij transpose and d(d1j)/dq
+
+d11 = Q1*T01;
+d12 = 0;
+d21 = Q1*T02;
+d22 = T01*Q2*T12;
+
+d11t = transpose(d11);
+d12t = 0;
+d21t = transpose(d21);
+d22t = transpose(d22);
+
+D111 = diff(d11,theta1);
+D112 = diff(d11,theta2);
+D121 = 0;
+D122 = 0;
+D211 = diff(d21,theta1);
+D212 = diff(d21,theta2);
+D221 = diff(d22,theta1);
+D222 = diff(d22,theta2);
+
+%% Solve For Mij
+M11 = simplify(sum(diag(d11*I1*d11t)) + sum(diag(d21*I2*d21t)));
+M12 = simplify(sum(diag(d22*I2*d21t)));
+M21 = simplify(sum(diag(d21*I2*d22t)));
+M22 = simplify(sum(diag(d22*I2*d22t)));
+
+%% Solve for hijk
+h111 = simplify(sum(diag(D111*I1*d11t)) + sum(diag(D211*I2*d21t)));
+h112 = simplify(sum(diag(D212*I2*d21t)));
+h121 = simplify(sum(diag(D221*I2*d21t)));
+h122 = simplify(sum(diag(D222*I2*d21t)));
+h211 = simplify(sum(diag(D211*I2*d22t)));
+h212 = simplify(sum(diag(D212*I2*d22t)));
+h221 = simplify(sum(diag(D221*I2*d22t)));
+h222 = simplify(sum(diag(D222*I2*d22t)));
+
+
+%% Solve for Gi
+syms g;
+gr = [0,0,-g,0];
+
+r_11 = [-L1/2;0;0;1];
+r_22 = [-L2/2;0;0;1];
+
+G1 = simplify(-(M1*gr*d11*r_11 + M2*gr*d21*r_22));
+G2 = simplify(-(M2*gr*d22*r_22));
+
+%% Torque without payload
+U1 = simplify(M11*q1_dot_dot +M12*q2_dot_dot + h111*(q1_dot)^2 + h112*q1_dot*q2_dot + h121*q1_dot*q2_dot + h122*(q2_dot)^2 + G1) 
+U2 = simplify(M21*q1_dot_dot +M22*q2_dot_dot + h211*(q1_dot)^2 + h212*q1_dot*q2_dot + h221*q1_dot*q2_dot + h222*(q2_dot)^2 + G2)
