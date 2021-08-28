@@ -1,0 +1,24 @@
+%% The forward kinematics model of a 4-DOF robot which has 3R planar arm mounted on a rail to have linear motion.
+
+
+%% Declaring Variables to be used
+syms c2 %short for cos(theta2)
+syms s2 %short for sin(theta2)
+syms c3 %short for cos(theta3)
+syms s3 %short for sin(theta3)
+syms c4 %short for cos(theta4)
+syms s4 %short for sin(theta4)
+syms l1 %link 1 length
+syms l2 %link 2 length
+syms l3 %link 3 length
+syms l4 %link 4 length
+syms d1 %joint distance 1
+
+%% To get 0T4
+
+A = [1,0,0,l1;0,0,1,0;0,-1,0,d1;0,0,0,1]           % the 0T1 matrix
+B = [c2,s2,0,l2*c2;-s2,c2,0,-l2*s2;0,0,1,0;0,0,0,1] % the 1T2 matrix
+C = [c3,s3,0,l3*c3;-s3,c3,0,-l3*s3;0,0,1,0;0,0,0,1] % the 2T3 matrix
+D = [c4,-s4,0,l4*c4;s4,c4,0,l4*s4;0,0,1,0;0,0,0,1] % the 3T4 matrix
+
+T = A*B*C*D %The 0T4 matrix
