@@ -1,5 +1,5 @@
 %% The forward kinematics model of a 4-DOF robot which has 3R planar arm mounted on a rail to have linear motion.
-
+% Use the file '4-DOF Robot.png' for reference of the model
 
 %% Declaring Variables to be used
 syms c2 %short for cos(theta2)
